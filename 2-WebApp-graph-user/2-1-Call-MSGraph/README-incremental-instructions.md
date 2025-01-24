@@ -10,7 +10,7 @@ endpoint: Microsoft identity platform
 
 # Using the Microsoft identity platform to call the Microsoft Graph API from an An ASP.NET Core 2.x Web App, on behalf of a user signing-in using their work and school or Microsoft personal account
 
-[![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/AAD%20Samples/.NET%20client%20samples/ASP.NET%20Core%20Web%20App%20tutorial)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=819)
+[![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/aad%20Samples/.NET%20client%20samples/ASP.NET%20Core%20Web%20App%20tutorial)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=819)
 
 ## Scenario
 
@@ -28,7 +28,7 @@ To run this sample:
 
 - Developers who wish to gain good familiarity of programming for Microsoft Graph are advised to go through the [An introduction to Microsoft Graph for developers](https://www.youtube.com/watch?v=EBbnpFdB92A) recorded session.
 
-### Step 1: Register the sample with your Azure AD tenant
+### Step 1: Register the sample with your Microsoft Entra tenant
 
 You first need to [register](../../1-WebApp-OIDC/1-1-MyOrg#step-1-register-the-sample-with-your-azure-ad-tenant) your app as described in [the first tutorial](../../1-WebApp-OIDC/1-1-MyOrg)
 
@@ -39,7 +39,7 @@ Then follow the following extra set of steps:
    - Type a key description (for instance `app secret`),
    - Select one of the available key durations (**In 1 year**, **In 2 years**, or **Never Expires**) as per your security concerns.
    - The generated key value will be displayed when you click the **Add** button. Copy the generated value for use in the steps later.
-   - You'll need this key later in your code's configuration files. This key value will not be displayed again, and is not retrievable by any other means, so make sure to note it from the Azure portal before navigating to any other screen or blade.
+   - You'll need this key later in your code's configuration files. This key value will not be displayed again, and is not retrievable by any other means, so make sure to note it from the Microsoft Entra admin center before navigating to any other screen or blade.
 1. In the app's registration screen, click on the **API permissions** blade in the left to open the page where we add access to the Apis that your application needs.
    - Click the **Add permissions** button and then,
    - Ensure that the **Microsoft APIs** tab is selected.
@@ -69,10 +69,10 @@ Open the project in your IDE (like Visual Studio) to configure the code.
 >In the steps below, "ClientID" is the same as "Application ID" or "AppId".
 
 1. Open the `appsettings.json` file
-1. Find the app key `ClientId` and replace the existing value with the application ID (clientId) of the `WebApp-OpenIDConnect-DotNet-code-v2` application copied from the Azure portal.
+1. Find the app key `ClientId` and replace the existing value with the application ID (clientId) of the `WebApp-OpenIDConnect-DotNet-code-v2` application copied from the Microsoft Entra admin center.
 1. Find the app key `TenantId` and replace by `common`, as here you chose to sign-in users with their work or school or personal account. In case you want to sign-in different audiences, refer back to the first phase of the tutorial.
-1. Find the app key `Domain` and replace the existing value with your Azure AD tenant name.
-1. Find the app key `ClientSecret` and replace the existing value with the key you saved during the creation of the `WebApp-OpenIDConnect-DotNet-code-v2` app, in the Azure portal.
+1. Find the app key `Domain` and replace the existing value with your Microsoft Entra tenant name.
+1. Find the app key `ClientSecret` and replace the existing value with the key you saved during the creation of the `WebApp-OpenIDConnect-DotNet-code-v2` app, in the Microsoft Entra admin center.
 
 - In case you want to deploy your app in Sovereign or national clouds, ensure the `GraphApiUrl` option matches the one you want. By default this is Microsoft Graph in the Azure public cloud
 
@@ -122,7 +122,7 @@ The two new lines of code:
 
 ### Add additional files to call Microsoft Graph
 
-Add the `Microsoft.Identity.Web.MicrosoftGraph` package, to use [Microsoft Graph SDK](https://github.com/microsoftgraph/msgraph-sdk-dotnet/blob/dev/docs/overview.md).
+Add the `Microsoft.Identity.Web.GraphServiceClient` package, to use [Microsoft Graph SDK](https://github.com/microsoftgraph/msgraph-sdk-dotnet/blob/dev/docs/overview.md).
 
 ### Update the `Startup.cs` file to enable the Microsoft Graph custom service
 
@@ -160,13 +160,13 @@ public HomeController(ILogger<HomeController> logger,
 [AuthorizeForScopes(ScopeKeySection = "DownstreamApi:Scopes")]
 public async Task<IActionResult> Profile()
 {
-    var me = await _graphServiceClient.Me.Request().GetAsync();
+    var me = await _graphServiceClient.Me.GetAsync();
     ViewData["Me"] = me;
 
     try
     {
         // Get user photo
-        using (var photoStream = await _graphServiceClient.Me.Photo.Content.Request().GetAsync())
+        using (var photoStream = await _graphServiceClient.Me.Photo.Content.GetAsync())
         {
             byte[] photoByte = ((MemoryStream)photoStream).ToArray();
             ViewData["Photo"] = Convert.ToBase64String(photoByte);
@@ -210,7 +210,7 @@ HTML table displaying the properties of the *me* object as returned by Microsoft
                 else
                 {
                     <h3>NO PHOTO</h3>
-                    <p>Check user profile in Azure Active Directory to add a photo.</p>
+                    <p>Check user profile in Microsoft Entra ID to add a photo.</p>
                 }
             }
         </td>
@@ -290,15 +290,15 @@ To process the CAE challenge from Microsoft Graph, the controller actions need t
     1. Catch a Microsoft Graph SDK's `ServiceException` and extract the required `claims`. This is done by wrapping the call to Microsoft Graph into a try/catch block that processes the challenge:
 
     ```CSharp
-    currentUser = await _graphServiceClient.Me.Request().GetAsync();
+    currentUser = await _graphServiceClient.Me.GetAsync();
     ```
 
-    1. Then redirect the user back to Azure AD with the new requested `claims`. Azure AD will use this `claims` payload to discern what or if any additional processing is required, example being the user needs to sign-in again or do multi-factor authentication.
+    1. Then redirect the user back to Microsoft Entra ID with the new requested `claims`. Microsoft Entra ID will use this `claims` payload to discern what or if any additional processing is required, example being the user needs to sign-in again or do multi-factor authentication.
 
   ```CSharp
     try
     {
-        currentUser = await _graphServiceClient.Me.Request().GetAsync();
+        currentUser = await _graphServiceClient.Me.GetAsync();
     }
     // Catch CAE exception from Graph SDK
     catch (ServiceException svcex) when (svcex.Message.Contains("Continuous access evaluation resulted in claims challenge"))

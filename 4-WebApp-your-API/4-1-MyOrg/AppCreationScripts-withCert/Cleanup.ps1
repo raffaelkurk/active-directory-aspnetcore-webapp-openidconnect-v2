@@ -1,3 +1,4 @@
+﻿
 [CmdletBinding()]
 param(    
     [Parameter(Mandatory=$False, HelpMessage='Tenant ID (This is a GUID which represents the "Directory ID" of the AzureAD tenant into which you want to create the apps')]
@@ -37,15 +38,17 @@ Function Cleanup
     Write-Host "Removing 'service' (TodoListService-aspnetcore-webapi) if needed"
     try
     {
-        Get-MgApplication -Filter "DisplayName eq 'TodoListService-aspnetcore-webapi'"  | ForEach-Object {Remove-MgApplication -ApplicationId $_.Id }
+        Get-MgApplication -Filter "DisplayName eq 'TodoListService-aspnetcore-webapi'" | ForEach-Object {Remove-MgApplication -ApplicationId $_.Id }
     }
     catch
     {
-	    Write-Host "Unable to remove the application 'TodoListService-aspnetcore-webapi' . Try deleting manually." -ForegroundColor White -BackgroundColor Red
+        $message = $_
+        Write-Warning $Error[0]
+        Write-Host "Unable to remove the application 'TodoListService-aspnetcore-webapi'. Error is $message. Try deleting manually." -ForegroundColor White -BackgroundColor Red
     }
 
     Write-Host "Making sure there are no more (TodoListService-aspnetcore-webapi) applications found, will remove if needed..."
-    $apps = Get-MgApplication -Filter "DisplayName eq 'TodoListService-aspnetcore-webapi'"
+    $apps = Get-MgApplication -Filter "DisplayName eq 'TodoListService-aspnetcore-webapi'" | Format-List Id, DisplayName, AppId, SignInAudience, PublisherDomain
     
     if ($apps)
     {
@@ -61,24 +64,28 @@ Function Cleanup
     # also remove service principals of this app
     try
     {
-        Get-MgServicePrincipal -filter "DisplayName eq 'TodoListService-aspnetcore-webapi'" | ForEach-Object {Remove-MgServicePrincipal -ApplicationId $_.Id -Confirm:$false}
+        Get-MgServicePrincipal -filter "DisplayName eq 'TodoListService-aspnetcore-webapi'" | ForEach-Object {Remove-MgServicePrincipal -ServicePrincipalId $_.Id -Confirm:$false}
     }
     catch
     {
-	    Write-Host "Unable to remove ServicePrincipal 'TodoListService-aspnetcore-webapi' . Try deleting manually from Enterprise applications." -ForegroundColor White -BackgroundColor Red
+        $message = $_
+        Write-Warning $Error[0]
+        Write-Host "Unable to remove ServicePrincipal 'TodoListService-aspnetcore-webapi'. Error is $message. Try deleting manually from Enterprise applications." -ForegroundColor White -BackgroundColor Red
     }
     Write-Host "Removing 'client' (TodoListClient-aspnetcore-webapi) if needed"
     try
     {
-        Get-MgApplication -Filter "DisplayName eq 'TodoListClient-aspnetcore-webapi'"  | ForEach-Object {Remove-MgApplication -ApplicationId $_.Id }
+        Get-MgApplication -Filter "DisplayName eq 'TodoListClient-aspnetcore-webapi'" | ForEach-Object {Remove-MgApplication -ApplicationId $_.Id }
     }
     catch
     {
-	    Write-Host "Unable to remove the application 'TodoListClient-aspnetcore-webapi' . Try deleting manually." -ForegroundColor White -BackgroundColor Red
+        $message = $_
+        Write-Warning $Error[0]
+        Write-Host "Unable to remove the application 'TodoListClient-aspnetcore-webapi'. Error is $message. Try deleting manually." -ForegroundColor White -BackgroundColor Red
     }
 
     Write-Host "Making sure there are no more (TodoListClient-aspnetcore-webapi) applications found, will remove if needed..."
-    $apps = Get-MgApplication -Filter "DisplayName eq 'TodoListClient-aspnetcore-webapi'"
+    $apps = Get-MgApplication -Filter "DisplayName eq 'TodoListClient-aspnetcore-webapi'" | Format-List Id, DisplayName, AppId, SignInAudience, PublisherDomain
     
     if ($apps)
     {
@@ -94,14 +101,17 @@ Function Cleanup
     # also remove service principals of this app
     try
     {
-        Get-MgServicePrincipal -filter "DisplayName eq 'TodoListClient-aspnetcore-webapi'" | ForEach-Object {Remove-MgServicePrincipal -ApplicationId $_.Id -Confirm:$false}
+        Get-MgServicePrincipal -filter "DisplayName eq 'TodoListClient-aspnetcore-webapi'" | ForEach-Object {Remove-MgServicePrincipal -ServicePrincipalId $_.Id -Confirm:$false}
     }
     catch
     {
-	    Write-Host "Unable to remove ServicePrincipal 'TodoListClient-aspnetcore-webapi' . Try deleting manually from Enterprise applications." -ForegroundColor White -BackgroundColor Red
+        $message = $_
+        Write-Warning $Error[0]
+        Write-Host "Unable to remove ServicePrincipal 'TodoListClient-aspnetcore-webapi'. Error is $message. Try deleting manually from Enterprise applications." -ForegroundColor White -BackgroundColor Red
     }
      # remove self-signed certificate
-     Get-ChildItem -Path Cert:\CurrentUser\My | where { $_.subject -eq "the certificate will be named by application name" } | Remove-Item
+     Write-Host "Removing CN=TodoListClient-aspnetcore-webapi certificate from Cert:/CurrentUser/My"
+     Get-ChildItem -Path Cert:\CurrentUser\My | where { $_.subject -eq "CN=TodoListClient-aspnetcore-webapi" } | Remove-Item
 }
 
 if ($null -eq (Get-Module -ListAvailable -Name "Microsoft.Graph.Applications")) { 
@@ -115,4 +125,3 @@ Cleanup -tenantId $tenantId -environment $azureEnvironmentName
 
 Write-Host "Disconnecting from tenant"
 Disconnect-MgGraph
-
